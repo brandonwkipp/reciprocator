@@ -1,4 +1,4 @@
-module levy-engine
+module levy-generator
 
 go 1.17
 

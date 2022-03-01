@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -8,37 +9,33 @@ import (
 
 	"gitlab.com/gomidi/midi/reader"
 	"gitlab.com/gomidi/midi/writer"
+
+	"levy-generator/note"
 )
 
-type Note struct {
-	Channel, Key, Velocity uint8
-	Position               *reader.Position
-}
-
-var NoteEvents []Note
-
-func NoteCapture(p *reader.Position, channel uint8, key uint8, velocity uint8) {
-	NoteEvents = append(NoteEvents, Note{
-		Channel:  channel,
-		Key:      key,
-		Velocity: velocity,
-		Position: p,
-	})
-}
-
 func main() {
+	var inputFile string
+	flag.StringVar(&inputFile, "if", "", "# of iterations")
+	flag.Parse()
+
+	if inputFile == "" {
+		fmt.Println("Usage: main.go -if \"file.mid\"")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
 	dir, err := os.Getwd()
 	if err != nil {
-		//fmt.Println(err)
+		fmt.Println(err)
 		return
 	}
 
-	f := filepath.Join(dir, "clap_v1.mid")
+	f := filepath.Join(dir, inputFile)
 
 	// to disable logging, pass mid.NoLogger() as option
 	rd := reader.New(reader.NoLogger(),
-		reader.NoteOn(NoteCapture),
-		reader.NoteOff(NoteCapture),
+		reader.NoteOn(note.NoteCapture),
+		reader.NoteOff(note.NoteCapture),
 	)
 
 	err = reader.ReadSMFFile(rd, f)
@@ -50,13 +47,15 @@ func main() {
 	err = writer.WriteSMF(wf, 1, func(wr *writer.SMF) error {
 		wr.SetChannel(0)
 
-		for _, n := range NoteEvents {
+		for _, n := range note.NoteEvents {
 			wr.SetDelta(n.Position.DeltaTicks)
 
+			transposedNote := note.TransposeNote(n.Key)
+
 			if n.Velocity == 0 {
-				writer.NoteOff(wr, n.Key+6)
+				writer.NoteOff(wr, transposedNote)
 			} else {
-				writer.NoteOn(wr, n.Key+6, n.Velocity)
+				writer.NoteOn(wr, transposedNote, n.Velocity)
 			}
 		}
 
@@ -70,7 +69,6 @@ func main() {
 		return
 	}
 
-	// to disable logging, pass mid.NoLogger() as option
 	wrd := reader.New()
 
 	err = reader.ReadSMFFile(wrd, f)
