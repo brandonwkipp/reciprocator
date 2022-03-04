@@ -50,7 +50,7 @@ func main() {
 		return
 	}
 
-	tonalCenterMidiKey, err := helpers.TranslateTonalCenterToMidiKey(tonalCenter)
+	tonalCenterMidiKey, err := helpers.LookupMidiKey(tonalCenter)
 	if err != nil {
 		fmt.Println("wtf")
 	}

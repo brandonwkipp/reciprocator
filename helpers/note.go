@@ -20,6 +20,23 @@ type NoteEvent struct {
 	Position               reader.Position
 }
 
+// LookupMidiKey returns the midi key value from keymap.json of a given tonal center
+func LookupMidiKey(tonalCenter string) (uint8, error) {
+	// prepare tone for lookup
+	lowercase := strings.ToLower(tonalCenter)
+	err := json.Unmarshal([]byte(toneJson), &toneMap)
+	if err != nil {
+		return 0, errors.New("could not intialize toneMap")
+	}
+
+	// check if tone is in map
+	if midiKey, ok := toneMap[lowercase]; ok {
+		return midiKey, nil
+	} else {
+		return 0, errors.New("could not find midi key for " + tonalCenter)
+	}
+}
+
 func NoteCapture(p *reader.Position, channel uint8, key uint8, velocity uint8) {
 	NoteEvents = append(NoteEvents, NoteEvent{
 		Channel:  channel,
@@ -42,19 +59,4 @@ func TransposeNote(key, tonalCenter uint8) uint8 {
 	} else {
 		return tonalCenter + (tonalCenter - key) // transpose up
 	}
-}
-
-func TranslateTonalCenterToMidiKey(tone string) (uint8, error) {
-	lowercase := strings.ToLower(tone)
-
-	err := json.Unmarshal([]byte(toneJson), &toneMap)
-	if err != nil {
-		return 0, errors.New("could not intialize toneMap")
-	}
-
-	if value, ok := toneMap[lowercase]; ok {
-		return value, nil
-	}
-
-	return 0, errors.New("couldn't do it")
 }
