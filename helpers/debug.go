@@ -8,7 +8,7 @@ import (
 	"gitlab.com/gomidi/midi/smf"
 )
 
-func DebugSMFFiel(fileName string) {
+func DebugSMFFile(fileName string) {
 	rd := reader.New(
 		reader.NoLogger(),
 		reader.NoteOn(DebugNote),
