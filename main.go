@@ -8,34 +8,59 @@ import (
 	"path/filepath"
 
 	"gitlab.com/gomidi/midi/reader"
+	"gitlab.com/gomidi/midi/smf/smfwriter"
 	"gitlab.com/gomidi/midi/writer"
 
-	"levy-generator/note"
+	"levy-generator/helpers"
 )
 
+func getFilePath(fileName string) (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, fileName), nil
+}
+
 func main() {
+	var debug bool
 	var inputFile string
-	flag.StringVar(&inputFile, "if", "", "# of iterations")
+	var tonalCenter string
+
+	// flags
+	flag.BoolVar(&debug, "debug", false, "debug input file")
+	flag.StringVar(&inputFile, "if", "", "input file location")
+	flag.StringVar(&tonalCenter, "gravity", "", "tonal center")
 	flag.Parse()
 
-	if inputFile == "" {
-		fmt.Println("Usage: main.go -if \"file.mid\"")
+	if inputFile == "" || tonalCenter == "" {
+		fmt.Println("Usage: main.go -if \"input-file.mid\" -gravity \"c-2\"")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	dir, err := os.Getwd()
+	f, err := getFilePath(inputFile)
 	if err != nil {
-		fmt.Println(err)
+		log.Println("hi")
+		log.Fatal(err)
+		log.Println("hi")
+	}
+
+	// handle debug
+	if debug {
+		helpers.DebugFile(f)
 		return
 	}
 
-	f := filepath.Join(dir, inputFile)
+	tonalCenterMidiKey, err := helpers.TranslateTonalCenterToMidiKey(tonalCenter)
+	if err != nil {
+		fmt.Println("wtf")
+	}
 
-	// to disable logging, pass mid.NoLogger() as option
-	rd := reader.New(reader.NoLogger(),
-		reader.NoteOn(note.NoteCapture),
-		reader.NoteOff(note.NoteCapture),
+	rd := reader.New(
+		reader.NoLogger(),
+		reader.NoteOn(helpers.NoteCapture),
+		reader.NoteOff(helpers.NoteCapture),
 	)
 
 	err = reader.ReadSMFFile(rd, f)
@@ -43,18 +68,33 @@ func main() {
 		fmt.Printf("could not read SMF file %v\n", f)
 	}
 
+	dir := ""
+
 	wf := filepath.Join(dir, "test.mid")
-	err = writer.WriteSMF(wf, 1, func(wr *writer.SMF) error {
+	err = writer.WriteSMF(wf, 2, func(wr *writer.SMF) error {
 		wr.SetChannel(0)
 
-		for _, n := range note.NoteEvents {
-			wr.SetDelta(n.Position.DeltaTicks)
+		writer.TrackSequenceName(wr, "Transport")
+		writer.Instrument(wr, "Hardware Interface II")
+		writer.DeprecatedPort(wr, 0)
+		writer.TempoBPM(wr, 120.00)
+		writer.TimeSig(wr, 4, 4, 24, 8)
 
-			transposedNote := note.TransposeNote(n.Key)
+		wr.SetDelta(61440)
+		writer.EndOfTrack(wr)
+
+		writer.DeprecatedPort(wr, 4)
+		writer.TrackSequenceName(wr, "MIDI Out Ch1")
+		writer.Instrument(wr, "MIDI Out Ch1")
+
+		for _, n := range helpers.NoteEvents {
+			wr.SetDelta(n.Position.DeltaTicks)
+			transposedNote := helpers.TransposeNote(n.Key, tonalCenterMidiKey)
 
 			if n.Velocity == 0 {
 				writer.NoteOff(wr, transposedNote)
 			} else {
+				wr.SetDelta(n.Position.DeltaTicks)
 				writer.NoteOn(wr, transposedNote, n.Velocity)
 			}
 		}
@@ -62,7 +102,7 @@ func main() {
 		writer.EndOfTrack(wr)
 
 		return nil
-	})
+	}, smfwriter.TimeFormat(rd.Header().TimeFormat))
 
 	if err != nil {
 		fmt.Printf("could not write SMF file %v\n", f)
@@ -70,13 +110,12 @@ func main() {
 	}
 
 	wrd := reader.New()
-
 	err = reader.ReadSMFFile(wrd, f)
 	if err != nil {
 		fmt.Printf("could not read SMF file %v\n", f)
 	}
 
-	log.Print("\n")
+	log.Println("\n-----------")
 
 	err = reader.ReadSMFFile(wrd, wf)
 	if err != nil {
