@@ -41,14 +41,12 @@ func main() {
 
 	f, err := getFilePath(inputFile)
 	if err != nil {
-		log.Println("hi")
 		log.Fatal(err)
-		log.Println("hi")
 	}
 
 	// handle debug
 	if debug {
-		helpers.DebugFile(f)
+		helpers.DebugSMFFile(f)
 		return
 	}
 
