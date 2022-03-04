@@ -14,6 +14,7 @@ var toneJson string
 var toneMap map[string]uint8
 var NoteEvents []NoteEvent
 
+// A NoteEvent contains all properties of any NoteOn/NoteOff messages rendered from an SMF
 type NoteEvent struct {
 	Channel, Key, Velocity uint8
 	Position               reader.Position
@@ -28,16 +29,18 @@ func NoteCapture(p *reader.Position, channel uint8, key uint8, velocity uint8) {
 	})
 }
 
+// TransposeNote transposes a note to its mirror image
 func TransposeNote(key, tonalCenter uint8) uint8 {
-	// first, disregard the octaves
-	if key%12 == 0 {
+	// ignore the tonal center
+	if key == tonalCenter {
 		return key
 	}
 
+	// handle inversion based on distance from tonal center
 	if key > tonalCenter {
-		return tonalCenter - (key - tonalCenter)
+		return tonalCenter - (key - tonalCenter) // transpose down
 	} else {
-		return tonalCenter + (tonalCenter - key)
+		return tonalCenter + (tonalCenter - key) // transpose up
 	}
 }
 
