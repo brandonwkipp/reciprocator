@@ -106,17 +106,4 @@ func main() {
 		fmt.Printf("could not write SMF file %v\n", f)
 		return
 	}
-
-	wrd := reader.New()
-	err = reader.ReadSMFFile(wrd, f)
-	if err != nil {
-		fmt.Printf("could not read SMF file %v\n", f)
-	}
-
-	log.Println("\n-----------")
-
-	err = reader.ReadSMFFile(wrd, wf)
-	if err != nil {
-		fmt.Printf("could not read SMF file %v\n", f)
-	}
 }
