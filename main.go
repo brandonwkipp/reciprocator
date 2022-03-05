@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -34,7 +33,7 @@ func main() {
 	flag.Parse()
 
 	if inputFile == "" || tonalCenter == "" {
-		fmt.Println("Usage: main.go -if \"input-file.mid\" -gravity \"c-2\"")
+		log.Println("Usage: main.go -if \"input-file.mid\" -gravity \"c-2\"")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -46,64 +45,52 @@ func main() {
 
 	// handle debug
 	if debug {
-		helpers.DebugSMFFile(f)
+		helpers.DebugSMF(f)
 		return
 	}
 
 	tonalCenterMidiKey, err := helpers.LookupMidiKey(tonalCenter)
 	if err != nil {
-		fmt.Println("wtf")
+		log.Fatal(err)
 	}
 
 	rd := reader.New(
 		reader.NoLogger(),
-		reader.NoteOn(helpers.NoteCapture),
-		reader.NoteOff(helpers.NoteCapture),
+		reader.Each(helpers.CaptureMiscMessage),
+		reader.NoteOn(helpers.CaptureNoteMessage),
+		reader.NoteOff(helpers.CaptureNoteMessage),
 	)
 
 	err = reader.ReadSMFFile(rd, f)
 	if err != nil {
-		fmt.Printf("could not read SMF file %v\n", f)
+		log.Fatalf("could not read SMF file %v", f)
 	}
 
 	dir := ""
 
 	wf := filepath.Join(dir, "test.mid")
-	err = writer.WriteSMF(wf, 2, func(wr *writer.SMF) error {
-		wr.SetChannel(0)
+	err = writer.WriteSMF(wf, rd.Header().NumTracks, func(wr *writer.SMF) error {
+		for _, e := range helpers.Events {
+			switch e := e.(type) {
+			case helpers.MiscEvent:
+				wr.SetDelta(e.Position.DeltaTicks)
+				wr.Write(e.Message)
+			case helpers.NoteEvent:
+				wr.SetDelta(e.Position.DeltaTicks)
+				transposedNote := helpers.InvertNote(e.Key, tonalCenterMidiKey)
 
-		writer.TrackSequenceName(wr, "Transport")
-		writer.Instrument(wr, "Hardware Interface II")
-		writer.DeprecatedPort(wr, 0)
-		writer.TempoBPM(wr, 120.00)
-		writer.TimeSig(wr, 4, 4, 24, 8)
-
-		wr.SetDelta(61440)
-		writer.EndOfTrack(wr)
-
-		writer.DeprecatedPort(wr, 4)
-		writer.TrackSequenceName(wr, "MIDI Out Ch1")
-		writer.Instrument(wr, "MIDI Out Ch1")
-
-		for _, n := range helpers.NoteEvents {
-			wr.SetDelta(n.Position.DeltaTicks)
-			transposedNote := helpers.TransposeNote(n.Key, tonalCenterMidiKey)
-
-			if n.Velocity == 0 {
-				writer.NoteOff(wr, transposedNote)
-			} else {
-				wr.SetDelta(n.Position.DeltaTicks)
-				writer.NoteOn(wr, transposedNote, n.Velocity)
+				if e.Velocity == 0 {
+					writer.NoteOff(wr, transposedNote)
+				} else {
+					wr.SetDelta(e.Position.DeltaTicks)
+					writer.NoteOn(wr, transposedNote, e.Velocity)
+				}
 			}
 		}
-
-		writer.EndOfTrack(wr)
-
 		return nil
 	}, smfwriter.TimeFormat(rd.Header().TimeFormat))
 
 	if err != nil {
-		fmt.Printf("could not write SMF file %v\n", f)
-		return
+		log.Fatalf("could not write SMF file %v", f)
 	}
 }
