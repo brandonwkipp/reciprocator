@@ -14,6 +14,7 @@ import (
 	"gitlab.com/gomidi/midi/writer"
 )
 
+// ConstructOutputFileName constructs a new output file name based on the input file name
 func ConstructOutputFileName(inputFile string) string {
 	ext := filepath.Ext(inputFile)
 	pos := strings.LastIndex(inputFile, ext)
