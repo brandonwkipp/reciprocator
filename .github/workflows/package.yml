@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: LevyInverter_${{ steps.version.outputs.tag }}_Darwin_x86_64.dmg
-          path: LevyInverter_${{ steps.version.outputs.tag }}_Darwin_x86_64.dmg
+          path: bin/LevyInverter_${{ steps.version.outputs.tag }}_Darwin_x86_64.dmg
 
       # linux
       - name: Build for linux
@@ -56,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: LevyInverter_${{ steps.version.outputs.tag }}_Linux_x86_64.tar.gz
-          path: LevyInverter_${{ steps.version.outputs.tag }}_Linux_x86_64.tar.gz
+          path: bin/LevyInverter_${{ steps.version.outputs.tag }}_Linux_x86_64.tar.gz
 
       # windows
       - name: Build for windows
@@ -69,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: LevyInverter_${{ steps.versionw.outputs.tag }}_Windows_x86_64.zip
-          path: LevyInverter_${{ steps.versionw.outputs.tag }}_Windows_x86_64.zip
+          path: bin/LevyInverter_${{ steps.versionw.outputs.tag }}_Windows_x86_64.zip
 
   # release:
   #   runs-on: ubuntu-latest
