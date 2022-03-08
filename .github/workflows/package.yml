@@ -42,8 +42,8 @@ jobs:
         if: matrix.platform == 'macos-10.15'
         uses: actions/upload-artifact@v2
         with:
-          name: LevyInverter_${{ steps.version.outputs.tag }}_Darwin_x86_64.dmg
-          path: bin/LevyInverter_${{ steps.version.outputs.tag }}_Darwin_x86_64.dmg
+          name: levy-inverter
+          path: bin/levy-inverter
 
       # linux
       - name: Build for linux
@@ -55,8 +55,8 @@ jobs:
         if: matrix.platform == 'ubuntu-18.04'
         uses: actions/upload-artifact@v2
         with:
-          name: LevyInverter_${{ steps.version.outputs.tag }}_Linux_x86_64.tar.gz
-          path: bin/LevyInverter_${{ steps.version.outputs.tag }}_Linux_x86_64.tar.gz
+          name: levy-inverter
+          path: bin/levy-inverter
 
       # windows
       - name: Build for windows
@@ -68,8 +68,8 @@ jobs:
         if: matrix.platform == 'windows-2019'
         uses: actions/upload-artifact@v2
         with:
-          name: LevyInverter_${{ steps.versionw.outputs.tag }}_Windows_x86_64.zip
-          path: bin/LevyInverter_${{ steps.versionw.outputs.tag }}_Windows_x86_64.zip
+          name: levy-inverter
+          path: bin/levy-inverter
 
   # release:
   #   runs-on: ubuntu-latest
