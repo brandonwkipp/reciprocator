@@ -15,10 +15,15 @@ import (
 )
 
 // ConstructOutputFileName constructs a new output file name based on the input file name
-func ConstructOutputFileName(inputFile string) string {
+func ConstructOutputFileName(inputFile string, invert bool) string {
 	ext := filepath.Ext(inputFile)
 	pos := strings.LastIndex(inputFile, ext)
-	return inputFile[:pos] + "-negative" + ext
+
+	if invert {
+		return inputFile[:pos] + "-inverted" + ext
+	} else {
+		return inputFile[:pos] + "-negative" + ext
+	}
 }
 
 // DebugMisc prints out any message that is not a NoteOn/NoteOff message
@@ -78,7 +83,7 @@ func ReadFile(f string, debug bool) (*reader.Reader, error) {
 }
 
 // WriteFile writes an inverted set of notes to a new standard midi file
-func WriteFile(rd *reader.Reader, tonalCenterMidiKey uint8, outputFile string) {
+func WriteFile(rd *reader.Reader, tonalCenterMidiKey uint8, outputFile string, invert bool) {
 	dir := ""
 	wf := filepath.Join(dir, outputFile)
 	err := writer.WriteSMF(wf, rd.Header().NumTracks, func(wr *writer.SMF) error {
@@ -89,7 +94,13 @@ func WriteFile(rd *reader.Reader, tonalCenterMidiKey uint8, outputFile string) {
 				wr.Write(e.Message)
 			case NoteEvent:
 				wr.SetDelta(e.Position.DeltaTicks)
-				transposedNote := InvertNote(e.Key, tonalCenterMidiKey)
+
+				var transposedNote uint8
+				if !invert {
+					transposedNote = ReciprocateNote(e.Key, tonalCenterMidiKey)
+				} else {
+					transposedNote = InvertNote(e.Key, tonalCenterMidiKey)
+				}
 
 				if e.Velocity == 0 {
 					writer.NoteOff(wr, transposedNote)

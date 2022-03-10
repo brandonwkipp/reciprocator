@@ -58,17 +58,19 @@ func TestCaptureNoteMessage(t *testing.T) {
 }
 
 func TestInvertNote(t *testing.T) {
+	tonic := uint8(50)
+
 	// Test the tonal center
-	invertedNote := InvertNote(0, 0)
-	assert.Equal(t, uint8(0), invertedNote)
-
-	// Test transponse down
-	invertedNote = InvertNote(50, 48)
-	assert.Equal(t, uint8(46), invertedNote)
-
-	// Test transponse up
-	invertedNote = InvertNote(46, 48)
+	invertedNote := InvertNote(50, tonic)
 	assert.Equal(t, uint8(50), invertedNote)
+
+	// Test transpose down
+	invertedNote = InvertNote(48, tonic)
+	assert.Equal(t, uint8(52), invertedNote)
+
+	// Test transpose up
+	invertedNote = InvertNote(52, tonic)
+	assert.Equal(t, uint8(48), invertedNote)
 }
 
 func TestLookupMidiKey(t *testing.T) {
@@ -85,5 +87,22 @@ func TestLookupMidiKey(t *testing.T) {
 
 	toneMap = nil
 	_, err = LookupMidiKey("c2")
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
+}
+
+func TestReciprocateNote(t *testing.T) {
+	tonic := uint8(50)
+
+	// Test the tonal center
+	reciprocatedNote := ReciprocateNote(50, tonic)
+	assert.Equal(t, uint8(57), reciprocatedNote)
+
+	reciprocatedNote = ReciprocateNote(52, tonic)
+	assert.Equal(t, uint8(55), reciprocatedNote)
+
+	reciprocatedNote = ReciprocateNote(48, tonic)
+	assert.Equal(t, uint8(59), reciprocatedNote)
+
+	reciprocatedNote = ReciprocateNote(30, 7)
+	assert.Equal(t, uint8(1), reciprocatedNote)
 }

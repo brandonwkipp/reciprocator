@@ -83,3 +83,12 @@ func LookupMidiKey(tonalCenter string) (uint8, error) {
 		return 0, errors.New("could not find midi key for " + tonalCenter)
 	}
 }
+
+// ReciprocateNote transposes a note to its mirror image with respect to the tonal center
+func ReciprocateNote(key, tonalCenter uint8) uint8 {
+	// 3.5 half steps is half the distance to the 5th from the root
+	// This only seems to work for the major scale for some reason??
+	axis := float32(tonalCenter) + 3.5
+	keyDistance := axis - float32(key)
+	return uint8(axis + keyDistance)
+}
