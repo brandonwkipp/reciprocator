@@ -1,6 +1,6 @@
 .PHONY: build clean run
 
-BIN=levy-inverter
+BIN=reciprocator
 
 build-darwin: clean
 	GOARCH=amd64 GOOS=darwin go build -o ./bin/${BIN} main.go
