@@ -1,4 +1,4 @@
-module levy-generator
+module reciprocator
 
 go 1.17
 
