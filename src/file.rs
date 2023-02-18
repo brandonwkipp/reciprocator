@@ -4,8 +4,18 @@ use rimd::{SMF};
 
 // ConstructOutputFileName constructs a new output file name based on the input file name
 pub fn construct_output_filename(filename: &str, invert: bool) -> String {
-	let ext = Path::new(filename).extension().unwrap().to_str().unwrap();
-    let pos = filename.rfind(ext).unwrap();
+	let ext = match Path::new(filename).extension() {
+		Some(ext) => match ext.to_str() {
+			Some(ext) => ext,
+			None => return String::new()
+		},
+		None => return String::new()
+	};
+
+    let pos = match filename.rfind(ext) {
+		Some(pos) => pos,
+		None => return String::new()
+	};
 
     if invert {
         format!("{}-inverted.{}", &filename[..pos - 1], ext)
