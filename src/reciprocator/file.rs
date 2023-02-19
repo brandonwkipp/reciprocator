@@ -2,26 +2,28 @@ use std::path::Path;
 
 use rimd::{SMF};
 
+use crate::reciprocator::note;
+
 // ConstructOutputFileName constructs a new output file name based on the input file name
 pub fn construct_output_filename(filename: &str, invert: bool) -> String {
 	let ext = match Path::new(filename).extension() {
 		Some(ext) => match ext.to_str() {
 			Some(ext) => ext,
-			None => return String::new()
+			None => return String::new(),
 		},
-		None => return String::new()
+		None => return String::new(),
 	};
 
-    let pos = match filename.rfind(ext) {
+	let pos = match filename.rfind(ext) {
 		Some(pos) => pos,
-		None => return String::new()
+		None => return String::new(),
 	};
 
-    if invert {
-        format!("{}-inverted.{}", &filename[..pos - 1], ext)
-    } else {
-        format!("{}-negative.{}", &filename[..pos - 1], ext)
-    }
+	if invert {
+		format!("{}-inverted.{}", &filename[..pos - 1], ext)
+	} else {
+		format!("{}-negative.{}", &filename[..pos - 1], ext)
+	}
 }
 
 // DebugMisc prints out any message that is not a NoteOn/NoteOff message
@@ -50,12 +52,19 @@ pub fn debug_smf(filename: &str) {
 		Err(e) => panic!("{}", e),
 	};
 
+	// for track in tracks {
+	// 	match track.name {
+	// 		Some(x) => println!("{x}"),
+	// 		_ => {},
+	// 	}
+	// }
+
 	for track in tracks {
-		match track.name {
-			Some(x) => println!("{x}"),
-			_ => {},
+		for event in track.events {
+			note::capture_note_message(event);
 		}
 	}
+
 	// if err != nil {
 	// 	log.Printf("could not read SMF file %v\n", fileName)
 	// 	os.Exit(1)
@@ -70,24 +79,28 @@ pub fn debug_smf(filename: &str) {
 // ReadFile reads a standard midi file and returns a Reader or logs output about the file if debug is set to true
 // fn read_file(f: string, debug: bool) -> *reader.Reader, error {
 // 	// Pass the debug functions to the reader instead of the default functions
-// 	if debug {
-// 		debug_smf(f)
-// 		return nil, nil
+// 	// if debug {
+// 	// 	debug_smf(f)
+// 	// 	return nil, nil
+// 	// }
+
+// 	let tracks = match SMF::from_file(Path::new(filename)) {
+// 		Ok(x) => x.tracks,
+// 		Err(e) => panic!("{}", e),
+// 	};
+
+// 	for track in tracks {
+// 		for event in events {
+
+// 		}
 // 	}
 
-// 	rd := reader.New(
-// 		reader.NoLogger(),
-// 		reader.Each(CaptureMiscMessage),
-// 		reader.NoteOn(CaptureNoteMessage),
-// 		reader.NoteOff(CaptureNoteMessage),
-// 	)
+// 	// err := reader.ReadSMFFile(rd, f)
+// 	// if err != nil {
+// 	// 	log.Fatalf("could not read SMF file %v", f)
+// 	// }
 
-// 	err := reader.ReadSMFFile(rd, f)
-// 	if err != nil {
-// 		log.Fatalf("could not read SMF file %v", f)
-// 	}
-
-// 	return rd, nil
+// 	// return rd, nil
 // }
 
 // WriteFile writes an inverted set of notes to a new standard midi file
