@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use rimd::{Event, SMF, SMFBuilder, TrackEvent};
+use rimd::{Event, SMF, SMFBuilder, SMFWriter, TrackEvent};
 
 use crate::reciprocator::event;
 
@@ -45,12 +45,7 @@ pub fn debug_smf(filename: &str) {
 		Err(e) => panic!("{}", e),
 	};
 
-	let mut builder = SMFBuilder::new();
-	let mut current_track = builder.num_tracks();
-
 	for track in tracks {
-		builder.add_track();
-
 		for event in track.events {
 			println!("{}", event);
 		}
@@ -95,8 +90,8 @@ pub fn debug_smf(filename: &str) {
 // }
 
 // WriteFile writes an inverted set of notes to a new standard midi file
-pub fn write_file(filename: &str, tonal_center_midi_key: u8, output_file: &str, invert: bool) {
-	let tracks = match SMF::from_file(Path::new(filename)) {
+pub fn write_file(filename: &str, tonal_center_midi_key: u8, output_filename: String, invert: bool) {
+	let tracks = match SMF::from_file(Path::new(&filename)) {
 		Ok(x) => x.tracks,
 		Err(e) => panic!("{}", e),
 	};
@@ -122,8 +117,10 @@ pub fn write_file(filename: &str, tonal_center_midi_key: u8, output_file: &str, 
 		current_track += 1;
 	}
 
-// 	dir := ""
-// 	wf := filepath.Join(dir, output_file)
+	println!("{}", &output_filename);
+
+	let writer = SMFWriter::from_smf(builder.result());
+	writer.write_to_file(Path::new(&output_filename));
 
 // 	if err != nil {
 // 		log.Fatalf("could not write SMF file %v", wf)
