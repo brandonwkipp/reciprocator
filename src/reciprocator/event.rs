@@ -1,22 +1,19 @@
-use rimd::{MidiMessage, TrackEvent};
+use rimd::{MidiMessage, Status};
 
-struct MiscEvent {
-	message: MidiMessage,
-	position: u8,
+pub fn handle_message(msg: MidiMessage, invert: bool, tonal_center_midi_key: u8) -> MidiMessage {
+	let channel = match msg.channel() {
+		Some(x) => x,
+		None => 0
+	};
+
+	match msg.status() {
+		Status::NoteOn => MidiMessage::note_on(msg.data[1], msg.data[2], channel),
+		Status::NoteOn => MidiMessage::note_off(msg.data[1], msg.data[2], channel),
+		_ => msg,
+	}
 }
 
-struct NoteEvent {
-	channel: u8,
-	key: u8,
-	position: String,
-	velocity: u8,
-}
-
-pub fn capture_note_message(e: TrackEvent) {
-	println!("{}", e);
-}
-
-pub fn invert_note(key: u8, tonal_center: u8) -> u8 {
+pub fn invert(key: u8, tonal_center: u8) -> u8 {
 	// ignore the tonal center
 	if key == tonal_center {
 		return key
@@ -30,7 +27,7 @@ pub fn invert_note(key: u8, tonal_center: u8) -> u8 {
 	}
 }
 
-pub fn reciprocate_note(key: u8, tonal_center: u8) -> u8 {
+pub fn reciprocate(key: u8, tonal_center: u8) -> u8 {
 	// 3.5 half steps is half the distance to the 5th from the root
 	// This only seems to work for the major scale for some reason??
 	let axis = tonal_center as f32 + 3.5;

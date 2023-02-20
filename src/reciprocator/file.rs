@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use rimd::{SMF};
+use rimd::{Event, SMF, SMFBuilder, TrackEvent};
 
-use crate::reciprocator::note;
+use crate::reciprocator::event;
 
 // ConstructOutputFileName constructs a new output file name based on the input file name
 pub fn construct_output_filename(filename: &str, invert: bool) -> String {
@@ -40,28 +40,19 @@ pub fn construct_output_filename(filename: &str, invert: bool) -> String {
 
 // DebugSMF prints out the contents of a standard midi file
 pub fn debug_smf(filename: &str) {
-	// rd := reader.New(
-	// 	reader.NoLogger(),
-	// 	reader.Each(DebugMisc),
-	// 	reader.NoteOff(DebugNote),
-	// 	reader.NoteOn(DebugNote),
-	// )
-
 	let tracks = match SMF::from_file(Path::new(filename)) {
 		Ok(x) => x.tracks,
 		Err(e) => panic!("{}", e),
 	};
 
-	// for track in tracks {
-	// 	match track.name {
-	// 		Some(x) => println!("{x}"),
-	// 		_ => {},
-	// 	}
-	// }
+	let mut builder = SMFBuilder::new();
+	let mut current_track = builder.num_tracks();
 
 	for track in tracks {
+		builder.add_track();
+
 		for event in track.events {
-			note::capture_note_message(event);
+			println!("{}", event);
 		}
 	}
 
@@ -104,37 +95,37 @@ pub fn debug_smf(filename: &str) {
 // }
 
 // WriteFile writes an inverted set of notes to a new standard midi file
-// fn write_file(rd: *reader.Reader, tonal_center_midi_key: uint8, output_file: string, invert: bool) {
+pub fn write_file(filename: &str, tonal_center_midi_key: u8, output_file: &str, invert: bool) {
+	let tracks = match SMF::from_file(Path::new(filename)) {
+		Ok(x) => x.tracks,
+		Err(e) => panic!("{}", e),
+	};
+
+	let mut builder = SMFBuilder::new();
+	let mut current_track = builder.num_tracks();
+
+	for track in tracks {
+		builder.add_track();
+
+		for track_event in track.events {
+			let altered_event: TrackEvent = match track_event.event {
+				Event::Midi(msg) => TrackEvent{
+					vtime: track_event.vtime,
+					event: Event::Midi(event::handle_message(msg, invert, tonal_center_midi_key)),
+				},
+				_ => track_event,
+			};
+
+			builder.add_event(current_track, altered_event);
+		}
+
+		current_track += 1;
+	}
+
 // 	dir := ""
 // 	wf := filepath.Join(dir, output_file)
-// 	err := writer.WriteSMF(wf, rd.Header().NumTracks, func(wr *writer.SMF) error {
-// 		for _, e := range Events {
-// 			switch e := e.(type) {
-// 			case MiscEvent:
-// 				wr.SetDelta(e.Position.DeltaTicks)
-// 				wr.Write(e.Message)
-// 			case NoteEvent:
-// 				wr.SetDelta(e.Position.DeltaTicks)
-
-// 				var transposed_note uint8
-// 				if !invert {
-// 					transposed_note = ReciprocateNote(e.Key, tonal_center_midi_key)
-// 				} else {
-// 					transposed_note = InvertNote(e.Key, tonal_center_midi_key)
-// 				}
-
-// 				if e.Velocity == 0 {
-// 					writer.NoteOff(wr, transposed_note)
-// 				} else {
-// 					wr.SetDelta(e.Position.DeltaTicks)
-// 					writer.NoteOn(wr, transposed_note, e.Velocity)
-// 				}
-// 			}
-// 		}
-// 		return nil
-// 	}, smfwriter.TimeFormat(rd.Header().TimeFormat))
 
 // 	if err != nil {
 // 		log.Fatalf("could not write SMF file %v", wf)
 // 	}
-// }
+}
