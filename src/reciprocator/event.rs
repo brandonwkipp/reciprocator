@@ -6,21 +6,22 @@ pub fn handle_message(msg: MidiMessage, invert: bool, tonal_center_midi_key: u8)
 		None => 0
 	};
 
-	let altered_note: u8;
-	if !invert {
-		altered_note = reciprocate_note(msg.data[2], tonal_center_midi_key);
-	} else {
-		altered_note = invert_note(msg.data[2], tonal_center_midi_key);
-	}
-
 	match msg.status() {
-		Status::NoteOn => MidiMessage::note_on(msg.data[1], altered_note, channel),
-		Status::NoteOn => MidiMessage::note_off(msg.data[1], altered_note, channel),
+		Status::NoteOff => MidiMessage::note_off(msg.data[1], handle_operation(msg.data[2], invert, tonal_center_midi_key), channel),
+		Status::NoteOn => MidiMessage::note_on(msg.data[1], handle_operation(msg.data[2], invert, tonal_center_midi_key), channel),
 		_ => msg,
 	}
 }
 
-pub fn invert_note(key: u8, tonal_center: u8) -> u8 {
+fn handle_operation(note: u8, invert: bool, tonal_center_midi_key: u8) -> u8 {
+	if !invert {
+		return reciprocate_note(note, tonal_center_midi_key)
+	} else {
+		return invert_note(note, tonal_center_midi_key)
+	}
+}
+
+fn invert_note(key: u8, tonal_center: u8) -> u8 {
 	// ignore the tonal center
 	if key == tonal_center {
 		return key
@@ -34,7 +35,7 @@ pub fn invert_note(key: u8, tonal_center: u8) -> u8 {
 	}
 }
 
-pub fn reciprocate_note(key: u8, tonal_center: u8) -> u8 {
+fn reciprocate_note(key: u8, tonal_center: u8) -> u8 {
 	// 3.5 half steps is half the distance to the 5th from the root
 	// This only seems to work for the major scale for some reason??
 	let axis = tonal_center as f32 + 3.5;

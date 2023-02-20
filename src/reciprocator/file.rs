@@ -42,7 +42,7 @@ pub fn construct_output_filename(filename: &str, invert: bool) -> String {
 pub fn debug_smf(filename: &str) {
 	let tracks = match SMF::from_file(Path::new(filename)) {
 		Ok(x) => x.tracks,
-		Err(e) => panic!("{}", e),
+		Err(err) => panic!("Could not read {}: {}", &filename, err),
 	};
 
 	for track in tracks {
@@ -50,43 +50,11 @@ pub fn debug_smf(filename: &str) {
 			println!("{}", event);
 		}
 	}
-
-	// if err != nil {
-	// 	log.Printf("could not read SMF file %v\n", fileName)
-	// 	os.Exit(1)
-	// }
 }
 
 // DebugSMFHeader prints out the contents of a standard midi file header
 // fn debug_smf_header(h: smf.Header) {
 // 	fmt.Println(h)
-// }
-
-// ReadFile reads a standard midi file and returns a Reader or logs output about the file if debug is set to true
-// fn read_file(f: string, debug: bool) -> *reader.Reader, error {
-// 	// Pass the debug functions to the reader instead of the default functions
-// 	// if debug {
-// 	// 	debug_smf(f)
-// 	// 	return nil, nil
-// 	// }
-
-// 	let tracks = match SMF::from_file(Path::new(filename)) {
-// 		Ok(x) => x.tracks,
-// 		Err(e) => panic!("{}", e),
-// 	};
-
-// 	for track in tracks {
-// 		for event in events {
-
-// 		}
-// 	}
-
-// 	// err := reader.ReadSMFFile(rd, f)
-// 	// if err != nil {
-// 	// 	log.Fatalf("could not read SMF file %v", f)
-// 	// }
-
-// 	// return rd, nil
 // }
 
 // WriteFile writes an inverted set of notes to a new standard midi file
@@ -117,12 +85,11 @@ pub fn write_file(filename: &str, tonal_center_midi_key: u8, output_filename: St
 		current_track += 1;
 	}
 
-	println!("{}", &output_filename);
-
 	let writer = SMFWriter::from_smf(builder.result());
-	writer.write_to_file(Path::new(&output_filename));
+	let result = writer.write_to_file(Path::new(&output_filename));
 
-// 	if err != nil {
-// 		log.Fatalf("could not write SMF file %v", wf)
-// 	}
+	match result {
+		Ok(_) => println!("Success writing to {}", &output_filename),
+		Err(err) => println!("Error writing to {}: {}", &output_filename, err),
+	}
 }
