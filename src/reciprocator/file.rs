@@ -65,12 +65,13 @@ pub fn write_file(filename: &str, tonal_center_midi_key: u8, output_filename: St
 	};
 
 	let mut builder = SMFBuilder::new();
-	let mut current_track = builder.num_tracks();
 
 	for track in tracks {
 		builder.add_track();
 
 		for track_event in track.events {
+			println!("Event in: {}", track_event);
+
 			let altered_event: TrackEvent = match track_event.event {
 				Event::Midi(msg) => TrackEvent{
 					vtime: track_event.vtime,
@@ -79,10 +80,10 @@ pub fn write_file(filename: &str, tonal_center_midi_key: u8, output_filename: St
 				_ => track_event,
 			};
 
-			builder.add_event(current_track, altered_event);
-		}
+			println!("Event out: {}", altered_event);
 
-		current_track += 1;
+			builder.add_event(builder.num_tracks() - 1, altered_event);
+		}
 	}
 
 	let writer = SMFWriter::from_smf(builder.result());

@@ -7,8 +7,8 @@ pub fn handle_message(msg: MidiMessage, invert: bool, tonal_center_midi_key: u8)
 	};
 
 	match msg.status() {
-		Status::NoteOff => MidiMessage::note_off(msg.data[1], handle_operation(msg.data[2], invert, tonal_center_midi_key), channel),
-		Status::NoteOn => MidiMessage::note_on(msg.data[1], handle_operation(msg.data[2], invert, tonal_center_midi_key), channel),
+		Status::NoteOff => MidiMessage::note_off(handle_operation(msg.data[1], invert, tonal_center_midi_key), msg.data[2], channel),
+		Status::NoteOn => MidiMessage::note_on(handle_operation(msg.data[1], invert, tonal_center_midi_key), msg.data[2], channel),
 		_ => msg,
 	}
 }
