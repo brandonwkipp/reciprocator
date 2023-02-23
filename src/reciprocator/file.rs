@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use rimd::{Event, SMF, SMFBuilder, SMFWriter, TrackEvent};
+use rimd::{Event, SMF, SMFWriter, Track, TrackEvent};
 
 use crate::reciprocator::event;
 
@@ -59,36 +59,41 @@ pub fn debug_smf(filename: &str) {
 
 // WriteFile writes an inverted set of notes to a new standard midi file
 pub fn write_file(filename: &str, tonal_center_midi_key: u8, output_filename: String, invert: bool) {
-	let tracks = match SMF::from_file(Path::new(&filename)) {
-		Ok(x) => x.tracks,
-		Err(e) => panic!("{}", e),
+	let file = match SMF::from_file(Path::new(&filename)) {
+		Ok(f) => f,
+		Err(err) => panic!("{}", err),
 	};
 
-	let mut builder = SMFBuilder::new();
-
-	for track in tracks {
-		builder.add_track();
+	let mut smf_tracks: Vec<Track> = Vec::new();
+	for track in file.tracks {
+		let mut events: Vec<TrackEvent> = Vec::new();
 
 		for track_event in track.events {
-			println!("Event in: {}", track_event);
-
-			let altered_event: TrackEvent = match track_event.event {
+			let altered_event = match track_event.event {
 				Event::Midi(msg) => TrackEvent{
 					vtime: track_event.vtime,
-					event: Event::Midi(event::handle_message(msg, invert, tonal_center_midi_key)),
+					event: Event::Midi(event::handle_message(msg, invert, tonal_center_midi_key))
 				},
 				_ => track_event,
 			};
 
-			println!("Event out: {}", altered_event);
-
-			builder.add_event(builder.num_tracks() - 1, altered_event);
+			events.push(altered_event);
 		}
+
+		smf_tracks.push(Track{
+			copyright: track.copyright,
+			events: events,
+			name: track.name,
+		});
 	}
 
-	let writer = SMFWriter::from_smf(builder.result());
-	let result = writer.write_to_file(Path::new(&output_filename));
+	let writer = SMFWriter::from_smf(SMF{
+		division: file.division,
+		format: file.format,
+		tracks: smf_tracks
+	});
 
+	let result = writer.write_to_file(Path::new(&output_filename));
 	match result {
 		Ok(_) => println!("Success writing to {}", &output_filename),
 		Err(err) => println!("Error writing to {}: {}", &output_filename, err),
