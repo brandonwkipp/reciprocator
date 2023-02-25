@@ -1,19 +1,15 @@
-.PHONY: build clean run
+.PHONY: build clean install run
 
 BIN=reciprocator
 
-build-darwin: clean
-	GOARCH=amd64 GOOS=darwin go build -o ./bin/${BIN} main.go
-
-build-linux: clean
-	GOARCH=amd64 GOOS=linux go build -o ./bin/${BIN} main.go
-
-build-windows: clean
-	GOARCH=amd64 GOOS=windows go build -o ./bin/${BIN} main.go
+build: clean
+	cargo build --release
 
 clean:
-	go clean
-	rm -rf ./bin/*
+	rm -rf ./target/debug ./target/release
+
+install: clean build
+	cp ./target/release/${BIN} ~/.local/bin/
 
 run:
-	go run .
+	cargo run
